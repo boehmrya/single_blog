@@ -6,8 +6,10 @@
  *
  */
 
+
 define('SINGLE_BLOG_NODE_TYPE', 'article');
 define('SINGLE_BLOG_LIST_COUNT', 3);
+
 
 /**
  * Returns a list of blog entries.
@@ -30,6 +32,7 @@ function single_blog_list($number) {
    return $query;
 }
 
+
 /**
 * Implements hook_block_info().
 */
@@ -42,4 +45,52 @@ function single_blog_block_info() {
   );
   return $blocks;
 }
+
+
+/**
+ * Implements hook_block_view().
+ * 
+ * First Draft!
+ * 
+ * @param $delta
+ * The name of the requested block.
+ */
+function single_blog_block_view($delta = '') {
+  //Create an empty block
+  $block = array(
+    'subject' => '',
+    'content' => '',
+  );
+  //Check which block is being requested
+  if ($delta == 'recent') {
+    //Set the block title
+    $block['subject'] = t('Recent blog posts');
+    //Check if the user can access content
+    if (user_access('access content')) {
+      //Retrieve the most recent nodes.
+      $result = single_blog_list(SINGLE_BLOG_LIST_COUNT);
+      //Create links for each blog entry
+      $items = array();
+      foreach ($result as $node) {
+        $items[] = array(
+          'data' => l($node->title, 'node/' . $node->nid),
+          'class' => array('node-' . $node->nid),
+        );
+      }
+      if (!empty($items)) {
+        //Theme the list of blog entries.
+        $block['content'] = array(
+          '#theme' => 'item_list__single_blog',
+          '#items' => $items,
+        );
+      }
+    }
+  }
+  return $block;
+}
+
+
+
+
+
 
