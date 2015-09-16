@@ -21,7 +21,7 @@ define('SINGLE_BLOG_LIST_COUNT', 3);
  */
 function single_blog_list($number) {
   //Use the database API to retrieve our data
-  $query = db_select('node', 'n');
+  $query = db_select('node', 'n')
     ->fields('n', array('nid', 'title', 'created', 'uid'))
     ->condition('type', SINGLE_BLOG_NODE_TYPE)
     ->condition('status', 1)
@@ -39,9 +39,9 @@ function single_blog_list($number) {
 function single_blog_block_info() {
   $blocks = array();
   //The array key defines the $delta parameter used in all other block hooks
-  $blocks['recent'] = array(
+  $blocks['recent_blog_posts'] = array(
   //The name of the block on the blocks administration page
-    'info' => t('Recent blog posts');
+    'info' => t('Recent blog posts'),
   );
   return $blocks;
 }
@@ -49,8 +49,6 @@ function single_blog_block_info() {
 
 /**
  * Implements hook_block_view().
- * 
- * First Draft!
  * 
  * @param $delta
  * The name of the requested block.
@@ -62,7 +60,7 @@ function single_blog_block_view($delta = '') {
     'content' => '',
   );
   //Check which block is being requested
-  if ($delta == 'recent') {
+  if ($delta == 'recent_blog_posts') {
     //Set the block title
     $block['subject'] = t('Recent blog posts');
     //Check if the user can access content
@@ -73,7 +71,11 @@ function single_blog_block_view($delta = '') {
       $items = array();
       foreach ($result as $node) {
         $items[] = array(
-          'data' => l($node->title, 'node/' . $node->nid),
+          'data' => array(
+            '#type' => 'link',
+            '#title' => $node->title,
+            '#href' => 'node/' . $node->nid,
+          ),
           'class' => array('node-' . $node->nid),
         );
       }
@@ -82,18 +84,35 @@ function single_blog_block_view($delta = '') {
         $block['content']['list'] = array(
           '#theme' => 'item_list__single_blog',
           '#items' => $items,
+          '#pre_render' => array('single_blog_item_list_child_render'),
         );
         $block['content']['more'] = array(
           '#theme' => 'more_link',
           '#url' => 'blog',
           '#title' => t('Read the latest blog entries.'),
         );
+        $block['content']['#attached']['css'][] = drupal_get_path('module', 'single_blog') . '/single-blog.css';
       }
     }
   }
   return $block;
 }
 
+
+/**
+* Render the child elements of theme_item_list() 
+* before its data is themed.
+*/
+function single_blog_item_list_child_render($elements) {
+  foreach (array_keys($elements['#items']) AS $key) {
+    //Take the renderable array that we set in single_blog_block_view() and render it into the string
+    //that theme_item_list() expects.
+    if (is_array($elements['#items'][$key]['data'])) {
+      $elements['#items'][$key]['data'] = drupal_render($elements['#items'][$key]['data']);
+    }
+  }
+  return $elements;
+}
 
 
 
