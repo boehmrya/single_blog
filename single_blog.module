@@ -129,6 +129,29 @@ function single_blog_theme($existing, $type, $theme, $path) {
 }
 
 
+/**
+* Preprocess single blog block item variables.
+*/
+function template_preprocess_single_blog_block_item(&$variables) {
+  $node = $variables['node'];
+  //Create a renderable array for the title
+  $variables['title'] = array(
+    '#type' => 'link',
+    '#title' => $node->title,
+    '#href' => 'node/' . $node->nid,
+  );
+  $variables['created'] = $node->created;
+  $variables['date'] = format_date($node->created, 'custom', 'F d, Y');
+  //Load the account object with the node's creator and store in a variable
+  //for themer convenience
+  $variables['user'] = user_load($node->uid);
+  //Theme the username.
+  $variables['name'] = theme('username', array(
+    'account' => $variables['user']
+  ));
+}
+
+
 
 
 
